@@ -1,0 +1,1 @@
+"""Corridor weather heatmap."""

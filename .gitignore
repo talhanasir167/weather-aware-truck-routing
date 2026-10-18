@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+backend/.coverage
+*.sqlite3
+db.sqlite3
+
+# Node
+node_modules/
+dist/
+build/
+.vite/
+.pnpm-store/
+*.local
+coverage/
+playwright-report/
+test-results/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docker / local data
+postgres_data/
+redis_data/
+
+# Misc
+*.log
+.cache/
+.turbo/
+*.pem
+
+# Local reference / assignment brief (do not ship)
+RoadWatch-ELD/
+fs-assessment-spotter.pdf
+IMPLEMENTATION_PLAN.md
