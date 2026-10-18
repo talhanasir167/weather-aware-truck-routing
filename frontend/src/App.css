@@ -15,7 +15,7 @@
   --border: #25303f;
   --border-soft: #1c2533;
   --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
   color: var(--text);
   background: var(--bg-0);
 }
@@ -190,13 +190,235 @@ button.secondary-btn:disabled {
 }
 
 .sidebar {
-  padding: 1rem;
+  padding: 0.85rem 1rem 1.1rem;
   overflow-y: auto;
   border-right: 1px solid var(--border);
   background: var(--bg-1);
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 0.85rem;
+}
+
+.sidebar-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  padding: 0.3rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.sidebar-tabs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.86rem;
+  padding: 0.55rem 0.4rem;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.sidebar-tabs button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sidebar-tabs button.active {
+  background: var(--amber-soft);
+  color: var(--amber);
+  box-shadow: inset 0 0 0 1px rgba(244, 163, 56, 0.35);
+}
+
+.tab-step {
+  display: inline-grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: var(--panel-2);
+  color: var(--muted-2);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.sidebar-tabs button.active .tab-step {
+  background: var(--amber);
+  color: #1a1206;
+}
+
+.tab-count {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(56, 212, 224, 0.15);
+  color: var(--cyan);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.howto {
+  margin: 0;
+  padding: 0.85rem 0.95rem 0.85rem 1.7rem;
+  background: var(--panel);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.howto li + li {
+  margin-top: 0.45rem;
+}
+
+.howto strong {
+  color: var(--text);
+}
+
+.text-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--amber);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.sidebar-empty {
+  margin: 0;
+  padding: 1rem;
+  background: var(--panel);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.advanced-toggle {
+  width: 100%;
+  margin: 0 0 0.65rem;
+  padding: 0.35rem 0;
+  background: none;
+  border: 0;
+  color: var(--muted-2);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.advanced-toggle:hover {
+  color: var(--muted);
+}
+
+.route-list-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.55rem;
+}
+
+.route-list-title-row h2 {
+  margin: 0;
+}
+
+.rec-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+  margin-bottom: 0.2rem;
+}
+
+.band-pill {
+  font-weight: 700;
+}
+
+.section-hint {
+  margin: 0.75rem 0 0;
+  font-size: 0.72rem;
+  color: var(--muted-2);
+  line-height: 1.4;
+}
+
+.checkpoint-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.checkpoint-header h3 {
+  margin: 0;
+}
+
+.checkpoint-prompt {
+  margin: 0.65rem 0 0;
+}
+
+.checkpoint-detail {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-soft);
+}
+
+.checkpoint-detail-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+}
+
+.checkpoint-eta {
+  margin: 0.35rem 0 0.65rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.wx-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+}
+
+.wx-grid li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.45rem 0.55rem;
+  background: var(--panel-2);
+  border-radius: 8px;
+}
+
+.wx-grid span {
+  font-size: 0.65rem;
+  color: var(--muted-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.wx-grid strong {
+  font-size: 0.85rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
 }
 
 .main-map {
@@ -222,6 +444,10 @@ button.secondary-btn:disabled {
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: -0.01em;
+}
+
+.route-list-title-row h2 {
+  margin: 0;
 }
 
 .field {

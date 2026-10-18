@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Layer, Source } from 'react-map-gl/maplibre'
-import type { FeatureCollection } from 'geojson'
+import type { FeatureCollection, Feature } from 'geojson'
 import type { HeatmapData } from '../../api/types'
 
 interface Props {
@@ -10,31 +10,42 @@ interface Props {
   playing?: boolean
 }
 
-function normalize(value: number, metric: Props['metric']): number {
-  if (metric === 'risk') return Math.min(1, value / 4)
-  if (metric === 'wind') return Math.min(1, value / 45)
-  if (metric === 'rain') return Math.min(1, value / 0.6)
-  return Math.min(1, value / 2.0)
+/** Map raw sample → heatmap weight 0–1. Risk Low still gets a floor so calm hours glow. */
+function weightFor(raw: number, metric: Props['metric']): number {
+  if (metric === 'risk') {
+    // Bands 0–4; Low (0) uses a soft floor so the corridor is still visible
+    return Math.min(1, Math.max(0.16, raw / 4))
+  }
+  if (metric === 'wind') return Math.min(1, raw / 40)
+  if (metric === 'rain') return Math.min(1, raw / 0.5)
+  return Math.min(1, raw / 1.5)
+}
+
+function includeSample(raw: number, metric: Props['metric']): boolean {
+  // Risk always paints the corridor (calm = soft green).
+  if (metric === 'risk') return true
+  // Skip empty weather so we don't spray sky dots on calm frames
+  if (metric === 'wind') return raw >= 4
+  if (metric === 'rain') return raw >= 0.02
+  return raw >= 0.05
 }
 
 export function HeatmapLayer({ heatmap, hourIndex, metric, playing = false }: Props) {
   const frames = useMemo(() => {
     const values = heatmap.frames[metric]
     return heatmap.hours.map((_, hi) => {
-      const fc: FeatureCollection = {
-        type: 'FeatureCollection',
-        features: heatmap.grid_points.map((pt, pi) => {
-          const raw = values[hi]?.[pi] ?? 0
-          const weight = normalize(raw, metric)
-          // Skip near-zero samples so calm hours don't spray cyan "sky dots"
-          if (weight < 0.05) return null
-          return {
-            type: 'Feature' as const,
-            properties: { weight, raw },
-            geometry: { type: 'Point' as const, coordinates: [pt.lon, pt.lat] },
-          }
-        }).filter(Boolean) as GeoJSON.Feature[],
+      const features: Feature[] = []
+      for (let pi = 0; pi < heatmap.grid_points.length; pi++) {
+        const pt = heatmap.grid_points[pi]
+        const raw = values[hi]?.[pi] ?? 0
+        if (!includeSample(raw, metric)) continue
+        features.push({
+          type: 'Feature',
+          properties: { weight: weightFor(raw, metric), raw },
+          geometry: { type: 'Point', coordinates: [pt.lon, pt.lat] },
+        })
       }
+      const fc: FeatureCollection = { type: 'FeatureCollection', features }
       return fc
     })
   }, [heatmap, metric])
@@ -49,18 +60,30 @@ export function HeatmapLayer({ heatmap, hourIndex, metric, playing = false }: Pr
         type="heatmap"
         paint={{
           'heatmap-weight': ['get', 'weight'],
-          'heatmap-intensity': playing ? 1.5 : 1.2,
-          'heatmap-radius': playing ? 52 : 42,
-          'heatmap-opacity': playing ? 0.72 : 0.55,
+          'heatmap-intensity': playing ? 1.85 : 1.45,
+          'heatmap-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            4,
+            playing ? 28 : 22,
+            7,
+            playing ? 56 : 44,
+            10,
+            playing ? 80 : 64,
+          ],
+          'heatmap-opacity': playing ? 0.78 : 0.62,
           'heatmap-color': [
             'interpolate',
             ['linear'],
             ['heatmap-density'],
             0,
             'rgba(0,0,0,0)',
-            0.2,
-            'rgba(74, 222, 128, 0.35)',
-            0.4,
+            0.15,
+            'rgba(56, 212, 224, 0.25)',
+            0.3,
+            'rgba(74, 222, 128, 0.55)',
+            0.45,
             '#eab308',
             0.6,
             '#f97316',

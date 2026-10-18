@@ -18,9 +18,11 @@ export function HeatmapControls() {
   const trip = useTripStore((s) => s.trip)
   const selectedRouteId = useTripStore((s) => s.selectedRouteId)
 
-  /** Continuous playhead (hours). Heatmap uses Math.floor; truck uses full value. */
   const playheadRef = useRef(hourIndex)
-  if (!playing) playheadRef.current = hourIndex
+
+  useEffect(() => {
+    if (!playing) playheadRef.current = hourIndex
+  }, [hourIndex, playing])
 
   const tripHours = useMemo(() => {
     const route = trip?.routes.find((r) => r.id === selectedRouteId)
@@ -40,7 +42,6 @@ export function HeatmapControls() {
         return
       }
       playheadRef.current = next
-      // Store integer hour for heatmap frames; truck reads playhead via same setter path
       setHour(next)
     }, TICK_MS)
     return () => window.clearInterval(id)
@@ -61,7 +62,7 @@ export function HeatmapControls() {
   const clampedHour = Math.min(Math.max(hourIndex, 0), maxH)
   const progressPct = (clampedHour / maxH) * 100
   const arrivalPct = Math.min(100, (tripHours / maxH) * 100)
-  const truckPct = Math.min(arrivalPct, progressPct) // pin sticks at arrival after trip ends
+  const truckPct = Math.min(arrivalPct, progressPct)
   const arrived = clampedHour >= tripHours - 1e-6
 
   const frameIdx = Math.min(Math.floor(clampedHour), heatmap.hours.length - 1)
@@ -98,15 +99,18 @@ export function HeatmapControls() {
       <div className="heatmap-row">
         <div className="heatmap-title">
           <span className={`play-dot ${playing ? 'on' : ''}`} />
-          <strong>Weather corridor</strong>
-          {playing && <span className="live-badge">LIVE</span>}
+          <div className="heatmap-title-text">
+            <strong>Time scrubber</strong>
+            <span className="heatmap-sub">Truck drives until arrival · weather continues to +48h</span>
+          </div>
+          {playing && <span className="live-badge">PLAYING</span>}
         </div>
         <select
           value={metric}
           onChange={(e) => setMetric(e.target.value as typeof metric)}
           aria-label="Heatmap metric"
         >
-          <option value="risk">Composite risk</option>
+          <option value="risk">Risk heatmap</option>
           <option value="wind">Wind</option>
           <option value="rain">Rain</option>
           <option value="snow">Snow</option>
@@ -119,10 +123,10 @@ export function HeatmapControls() {
       <div className="slider-meta">
         <span className="hour-chip">+{clampedHour.toFixed(1)}h</span>
         <span>{hourLabel}</span>
-        <span className="trip-phase">
+        <span className={`trip-phase ${arrived ? 'arrived' : ''}`}>
           {arrived
-            ? `Arrived (${tripHours.toFixed(1)}h) · forecast continues`
-            : `Truck ${Math.min(100, (clampedHour / tripHours) * 100).toFixed(0)}% to destination`}
+            ? `Truck parked · weather hour ${clampedHour.toFixed(0)}`
+            : `Truck en route · ${Math.min(100, (clampedHour / tripHours) * 100).toFixed(0)}%`}
         </span>
         <span className="frame-stat">{avgLabel}</span>
       </div>
@@ -137,10 +141,9 @@ export function HeatmapControls() {
           } as CSSProperties
         }
       >
-        {/* Trip segment (0 → arrival) vs post-arrival forecast */}
-        <div className="scrubber__trip" />
+        <div className="scrubber__trip" title="Driving window" />
         <div className="scrubber__arrival-line" title={`Arrival ~${tripHours.toFixed(1)}h`} />
-        <div className="scrubber__truck-pin" title="Truck on timeline">
+        <div className="scrubber__truck-pin" title="Truck position on trip">
           🚛
         </div>
         <input
@@ -156,15 +159,23 @@ export function HeatmapControls() {
             playheadRef.current = v
             setHour(v)
           }}
-          aria-label="Forecast hour 0 to 48"
+          aria-label="Hours after departure, 0 to 48"
         />
       </div>
 
       <div className="slider-ends">
-        <span>0h departure</span>
-        <span className="arrival-label">Arrival {tripHours.toFixed(1)}h</span>
-        <span>+48h</span>
+        <span>Depart 0h</span>
+        <span className="arrival-label">Arrive {tripHours.toFixed(1)}h</span>
+        <span>Weather +48h</span>
       </div>
+
+      {metric === 'risk' && (frameStats?.max ?? 0) < 0.5 && (
+        <p className="calm-hint">
+          This hour is calm (avg risk {frameStats?.avg.toFixed(2) ?? '0'}) — soft glow = Low along the
+          corridor. Switch metric to <strong>Wind</strong>, or run <strong>Load storm demo</strong> for
+          High/Severe heat.
+        </p>
+      )}
     </div>
   )
 }

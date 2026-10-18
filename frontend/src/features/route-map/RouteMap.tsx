@@ -28,6 +28,7 @@ export function RouteMap() {
   const [mapReady, setMapReady] = useState(false)
   const [mapError, setMapError] = useState<string | null>(null)
   const [popupCp, setPopupCp] = useState<Checkpoint | null>(null)
+  const [showEtaLabels, setShowEtaLabels] = useState(true)
 
   // Never leave the UI stuck on "Loading map…" if the style/worker fails.
   useEffect(() => {
@@ -274,11 +275,12 @@ export function RouteMap() {
                     minute: '2-digit',
                   })
                   const showEta =
-                    i === 0 ||
-                    i === cps.length - 1 ||
-                    i % step === 0 ||
-                    activeCheckpointIndexes.has(cp.index) ||
-                    selectedCheckpoint?.index === cp.index
+                    showEtaLabels &&
+                    (i === 0 ||
+                      i === cps.length - 1 ||
+                      i % step === 0 ||
+                      activeCheckpointIndexes.has(cp.index) ||
+                      selectedCheckpoint?.index === cp.index)
                   return {
                     type: 'Feature' as const,
                     properties: {
@@ -412,24 +414,36 @@ export function RouteMap() {
 
       {trip && (
         <div className="map-legend">
-          <span className="legend-item">
-            <i style={{ background: '#f4a338' }} /> Recommended
-          </span>
-          <span className="legend-item">
-            <i style={{ background: '#38d4e0' }} /> Alternate
-          </span>
-          <span className="legend-item">
-            <i style={{ background: '#22c55e' }} /> Low
-          </span>
-          <span className="legend-item">
-            <i style={{ background: '#eab308' }} /> Mod
-          </span>
-          <span className="legend-item">
-            <i style={{ background: '#f97316' }} /> High
-          </span>
-          <span className="legend-item">
-            <i style={{ background: '#ef4444' }} /> Severe
-          </span>
+          <div className="legend-row">
+            <span className="legend-item">
+              <i style={{ background: '#f4a338' }} /> Best route
+            </span>
+            <span className="legend-item">
+              <i style={{ background: '#38d4e0' }} /> Alternate
+            </span>
+          </div>
+          <div className="legend-row legend-row--risk">
+            <span className="legend-item">
+              <i style={{ background: '#22c55e' }} /> Low
+            </span>
+            <span className="legend-item">
+              <i style={{ background: '#eab308' }} /> Mod
+            </span>
+            <span className="legend-item">
+              <i style={{ background: '#f97316' }} /> High
+            </span>
+            <span className="legend-item">
+              <i style={{ background: '#ef4444' }} /> Severe
+            </span>
+          </div>
+          <label className="legend-toggle">
+            <input
+              type="checkbox"
+              checked={showEtaLabels}
+              onChange={(e) => setShowEtaLabels(e.target.checked)}
+            />
+            ETA labels
+          </label>
         </div>
       )}
 
@@ -437,8 +451,15 @@ export function RouteMap() {
 
       {!trip && (
         <div className="map-empty">
-          <strong>Plan a trip to see routes</strong>
-          <span>Origin, destination, departure, and load weight → safest corridor on the map.</span>
+          <strong>Start in the Plan tab</strong>
+          <span>
+            Enter origin → destination → departure → load, then compare the ranked corridors here.
+          </span>
+          <ol className="map-empty-steps">
+            <li>Plan trip</li>
+            <li>Pick a route</li>
+            <li>Scrub 0–48h weather</li>
+          </ol>
         </div>
       )}
 

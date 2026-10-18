@@ -23,7 +23,11 @@ const STORM_DEMO = {
   interval: 25 as const,
 }
 
-export function TripForm() {
+type Props = {
+  onPlanned?: () => void
+}
+
+export function TripForm({ onPlanned }: Props) {
   const { setTrip, setHeatmap, setLoading, setError, loading } = useTripStore()
   const [origin, setOrigin] = useState('Chicago, IL')
   const [originLat, setOriginLat] = useState<number | undefined>(41.8781)
@@ -34,6 +38,7 @@ export function TripForm() {
   const [departureLocal, setDepartureLocal] = useState(defaultDeparture)
   const [loadLb, setLoadLb] = useState(20000)
   const [interval, setInterval] = useState<10 | 25 | 50>(25)
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
   async function runPlan(opts: {
     demoStorm?: boolean
@@ -66,6 +71,7 @@ export function TripForm() {
         demo_storm: opts.demoStorm ?? false,
       })
       setTrip(trip)
+      onPlanned?.()
       getHeatmap(trip.id)
         .then(setHeatmap)
         .catch((err) => console.warn('Heatmap fetch failed', err))
@@ -100,7 +106,7 @@ export function TripForm() {
 
   return (
     <form className="trip-form" onSubmit={onSubmit}>
-      <h2>Plan a trip</h2>
+      <h2>Trip inputs</h2>
       <LocationAutocomplete
         label="Origin"
         value={origin}
@@ -122,7 +128,7 @@ export function TripForm() {
         }}
       />
       <label className="field">
-        <span>Departure (local)</span>
+        <span>Departure</span>
         <input
           type="datetime-local"
           value={departureLocal}
@@ -141,17 +147,29 @@ export function TripForm() {
           required
         />
       </label>
-      <label className="field">
-        <span>Weather sample interval</span>
-        <select
-          value={interval}
-          onChange={(e) => setInterval(Number(e.target.value) as 10 | 25 | 50)}
-        >
-          <option value={10}>Every 10 miles</option>
-          <option value={25}>Every 25 miles</option>
-          <option value={50}>Every 50 miles</option>
-        </select>
-      </label>
+
+      <button
+        type="button"
+        className="advanced-toggle"
+        aria-expanded={showAdvanced}
+        onClick={() => setShowAdvanced((v) => !v)}
+      >
+        {showAdvanced ? 'Hide' : 'Show'} sampling options
+      </button>
+      {showAdvanced && (
+        <label className="field">
+          <span>Weather sample interval</span>
+          <select
+            value={interval}
+            onChange={(e) => setInterval(Number(e.target.value) as 10 | 25 | 50)}
+          >
+            <option value={10}>Every 10 miles</option>
+            <option value={25}>Every 25 miles</option>
+            <option value={50}>Every 50 miles</option>
+          </select>
+        </label>
+      )}
+
       <button type="submit" className="primary" disabled={loading}>
         {loading ? 'Planning…' : 'Find safest routes'}
       </button>
@@ -160,13 +178,12 @@ export function TripForm() {
         className="secondary-btn"
         disabled={loading}
         onClick={onStormDemo}
-        title="Chicago → Minneapolis with a synthetic storm band for Loom demos"
+        title="Chicago → Minneapolis with a synthetic storm band"
       >
         Load storm demo
       </button>
       <p className="form-hint">
-        Storm demo injects High/Severe weather on part of each corridor so risk
-        differences show even when the live forecast is calm.
+        Storm demo uses CHI→MSP plus fake High/Severe weather — best for demos when the real forecast is calm.
       </p>
     </form>
   )
