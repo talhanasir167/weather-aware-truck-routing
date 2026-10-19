@@ -12,8 +12,8 @@ from apps.weather.types import WeatherSample
 
 logger = logging.getLogger(__name__)
 
-# Smaller batches are more resilient when Open-Meteo returns intermittent 503s.
-BATCH_SIZE = 5
+# One multi-location request covers a whole corridor; per-point retry handles 503s.
+BATCH_SIZE = 25
 
 
 def _forecast_days_needed(hours: list[str]) -> int:

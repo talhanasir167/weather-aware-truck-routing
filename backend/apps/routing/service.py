@@ -81,14 +81,19 @@ def get_route_alternatives(
     candidates, degraded = _fetch_primary(origin, destination)
     use_ors = "ors_auth" not in degraded and "ors_rate_limit" not in degraded
 
-    if len(dedupe_routes(candidates)) < TARGET_ROUTES:
+    # Dedupe is the expensive step — run it once per added candidate, not twice.
+    distinct = dedupe_routes(candidates)
+    if len(distinct) < TARGET_ROUTES:
         for via in _via_points(origin, destination):
-            if len(dedupe_routes(candidates)) >= TARGET_ROUTES:
-                break
             extra = _fetch_via(origin, destination, via, use_ors=use_ors)
+            if not extra:
+                continue
             candidates.extend(extra)
+            distinct = dedupe_routes(candidates)
+            if len(distinct) >= TARGET_ROUTES:
+                break
 
-    kept = dedupe_routes(candidates)[:TARGET_ROUTES]
+    kept = distinct[:TARGET_ROUTES]
     # Prefer shortest duration among remaining if we somehow have more
     kept = sorted(kept, key=lambda r: r.duration_s)[:TARGET_ROUTES]
 

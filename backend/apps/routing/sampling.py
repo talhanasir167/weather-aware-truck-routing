@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
+
 from apps.geo.polyline import LatLon, cumulative_distances_mi
 
 from .types import Checkpoint
@@ -80,18 +82,17 @@ def build_checkpoints(
     cum_duration_s: list[float] | None = None,
 ) -> list[Checkpoint]:
     """Sample checkpoints and attach ETAs via duration interpolation."""
-    from .eta import eta_at_distance
+    from .eta import duration_axis, duration_on_axis, parse_departure
 
     samples = sample_checkpoints(geometry, interval_mi, cum_distance_mi)
+    # Resolve distance/duration axis once, then interpolate each checkpoint.
+    dists, durs = duration_axis(geometry, cum_distance_mi, cum_duration_s)
+    departure = parse_departure(departure_utc_iso)
+
     checkpoints: list[Checkpoint] = []
     for i, (pt, dist_mi) in enumerate(samples):
-        dur_s, eta_iso = eta_at_distance(
-            dist_mi,
-            departure_utc_iso,
-            geometry=geometry,
-            cum_distance_mi=cum_distance_mi,
-            cum_duration_s=cum_duration_s,
-        )
+        dur_s = duration_on_axis(dist_mi, dists, durs)
+        eta_iso = (departure + timedelta(seconds=dur_s)).isoformat().replace("+00:00", "Z")
         checkpoints.append(
             Checkpoint(
                 index=i,

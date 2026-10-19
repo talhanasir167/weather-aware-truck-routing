@@ -250,26 +250,30 @@ def plan_trip(
                 is_recommended=(item["route_key"] == rec.route_id),
                 rank=rec.ranking.index(item["route_key"]) if item["route_key"] in rec.ranking else rank,
             )
-            for detail in item["checkpoints"]:
-                cp = detail["checkpoint"]
-                wx = detail["weather"]
-                eta = datetime.fromisoformat(cp.eta_utc.replace("Z", "+00:00"))
-                CheckpointModel.objects.create(
-                    route=rp,
-                    index=cp.index,
-                    lat=cp.lat,
-                    lon=cp.lon,
-                    distance_mi=cp.distance_mi,
-                    eta_utc=eta,
-                    segment_miles=detail["segment_miles"],
-                    band=detail["band"].label,
-                    wind_mph=wx.wind_mph,
-                    wind_gusts_mph=wx.wind_gusts_mph,
-                    rain_in_hr=wx.rain_in_hr,
-                    snow_in_hr=wx.snow_in_hr,
-                    weather_available=wx.available,
-                    reasons=detail["reasons"],
-                )
+            # One round-trip per route instead of one per checkpoint.
+            CheckpointModel.objects.bulk_create(
+                [
+                    CheckpointModel(
+                        route=rp,
+                        index=detail["checkpoint"].index,
+                        lat=detail["checkpoint"].lat,
+                        lon=detail["checkpoint"].lon,
+                        distance_mi=detail["checkpoint"].distance_mi,
+                        eta_utc=datetime.fromisoformat(
+                            detail["checkpoint"].eta_utc.replace("Z", "+00:00")
+                        ),
+                        segment_miles=detail["segment_miles"],
+                        band=detail["band"].label,
+                        wind_mph=detail["weather"].wind_mph,
+                        wind_gusts_mph=detail["weather"].wind_gusts_mph,
+                        rain_in_hr=detail["weather"].rain_in_hr,
+                        snow_in_hr=detail["weather"].snow_in_hr,
+                        weather_available=detail["weather"].available,
+                        reasons=detail["reasons"],
+                    )
+                    for detail in item["checkpoints"]
+                ]
+            )
     return trip
 
 
