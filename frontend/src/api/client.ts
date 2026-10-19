@@ -1,12 +1,22 @@
 import type { ApiStatus, GeocodeResult, HeatmapData, PlanRequest, TripPlan } from './types'
 
-const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
+const BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '')
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
-    ...init,
-  })
+  if (!BASE && import.meta.env.PROD) {
+    throw new Error('API URL not configured (VITE_API_BASE_URL). Redeploy frontend with the Render URL.')
+  }
+  let res: Response
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
+      ...init,
+    })
+  } catch {
+    throw new Error(
+      'Failed to reach API — wake https://weather-truck-api-flzo.onrender.com/api/v1/healthz then retry (free tier cold start).',
+    )
+  }
   if (!res.ok) {
     let message = res.statusText
     try {

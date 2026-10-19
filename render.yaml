@@ -5,7 +5,8 @@ services:
     plan: free # 0.1 CPU / 512 MB — free tier
     rootDir: backend
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
-    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+    # Free-tier plans (ORS + OSRM + weather) often exceed the default 30s worker timeout.
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --timeout 120 --workers 1
     healthCheckPath: /api/v1/healthz
     envVars:
       - key: DJANGO_ENV
