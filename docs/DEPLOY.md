@@ -13,7 +13,7 @@
 5. Env vars:
    - `DJANGO_ENV=prod`
    - `DJANGO_SECRET_KEY` (generate)
-   - `ALLOWED_HOSTS=<your-service>.onrender.com`
+   - `ALLOWED_HOSTS=.onrender.com,localhost,127.0.0.1` (or your exact `*.onrender.com` host)
    - `CORS_ALLOWED_ORIGINS=https://<your-vercel-app>.vercel.app`
    - `ORS_API_KEY` (free key from openrouteservice.org — recommended)
    - `DATABASE_URL` (from Render Postgres)

@@ -6,9 +6,17 @@ DEBUG = False
 
 SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 
+# Render health checks / public URL often differ from a hardcoded hostname.
+# Always allow RENDER_EXTERNAL_HOSTNAME and *.onrender.com.
 ALLOWED_HOSTS = [
     h.strip() for h in os.environ.get("ALLOWED_HOSTS", "").split(",") if h.strip()
 ]
+_render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME", "").strip()
+if _render_host and _render_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_render_host)
+for _extra in (".onrender.com", "localhost", "127.0.0.1"):
+    if _extra not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_extra)
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 if DATABASE_URL:
