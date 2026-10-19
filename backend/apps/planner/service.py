@@ -132,6 +132,8 @@ def plan_trip(
         route_payloads.append({"raw": rr, "checkpoints": cps})
 
     weather_samples, wx_meta = fetch_for_checkpoints(all_wx_points)
+    if wx_meta.get("unavailable"):
+        degraded = [*degraded, "weather_partial"]
 
     rankables: list[RankableRoute] = []
     enriched = []

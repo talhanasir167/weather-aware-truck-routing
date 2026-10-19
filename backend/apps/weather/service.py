@@ -12,7 +12,8 @@ from apps.weather.types import WeatherSample
 
 logger = logging.getLogger(__name__)
 
-BATCH_SIZE = 50
+# Smaller batches are more resilient when Open-Meteo returns intermittent 503s.
+BATCH_SIZE = 5
 
 
 def _forecast_days_needed(hours: list[str]) -> int:
@@ -60,14 +61,19 @@ def fetch_for_checkpoints(
     forecast_days = _forecast_days_needed(all_hours or [p[2] for p in points])
 
     locs = list(points_to_fetch.keys())
-    try:
-        for i in range(0, len(locs), BATCH_SIZE):
-            batch = locs[i : i + BATCH_SIZE]
+    fetch_errors = 0
+    for i in range(0, len(locs), BATCH_SIZE):
+        batch = locs[i : i + BATCH_SIZE]
+        try:
             payloads = open_meteo.fetch_hourly(batch, forecast_days=forecast_days)
             for loc, payload in zip(batch, payloads, strict=False):
-                fetched_payloads[loc] = payload
-    except Exception:
-        logger.exception("Open-Meteo fetch failed; continuing with cache/unavailable")
+                if payload:
+                    fetched_payloads[loc] = payload
+                else:
+                    fetch_errors += 1
+        except Exception:
+            fetch_errors += len(batch)
+            logger.exception("Open-Meteo batch failed; continuing with cache/unavailable")
 
     # Populate cache from fetched payloads
     to_cache: dict[str, dict] = {}
@@ -115,10 +121,16 @@ def fetch_for_checkpoints(
             )
 
     hits = len(unique_keys) - len(misses)
+    available_n = sum(1 for s in samples if s.available)
     meta = {
         "cache_hit_ratio": (hits / len(unique_keys)) if unique_keys else 1.0,
         "fetched": len(to_cache),
         "requested": len(unique_keys),
-        "unique_grid_points": len(locs) if locs else len({wx_cache.snap_grid(p[0], p[1]) for p in points}),
+        "unique_grid_points": len(locs)
+        if locs
+        else len({wx_cache.snap_grid(p[0], p[1]) for p in points}),
+        "available": available_n,
+        "unavailable": len(samples) - available_n,
+        "fetch_errors": fetch_errors,
     }
     return samples, meta

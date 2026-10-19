@@ -13,7 +13,9 @@ export function RouteSummaryList({ onEditPlan }: Props) {
   if (!trip) return null
 
   const ordered = [...trip.routes].sort((a, b) => a.rank - b.rank)
-  const otherNotes = trip.degraded.filter((d) => d !== 'ors_auth')
+  const otherNotes = trip.degraded.filter(
+    (d) => !['ors_auth', 'ors_error', 'weather_partial'].includes(d),
+  )
 
   return (
     <section className="route-list">
@@ -34,6 +36,15 @@ export function RouteSummaryList({ onEditPlan }: Props) {
         )}
         {trip.meta?.demo_storm ? (
           <p className="storm-note">Synthetic storm band on — risk differences are demo weather.</p>
+        ) : null}
+        {trip.degraded.includes('weather_partial') ? (
+          <p className="degraded">
+            Some forecasts were unavailable — try again, or use <strong>Load storm demo</strong> for
+            the Loom.
+          </p>
+        ) : null}
+        {trip.degraded.includes('ors_error') && trip.meta?.routing_provider !== 'ors' ? (
+          <p className="ors-note">Truck routing fell back to OSRM for this trip.</p>
         ) : null}
         {otherNotes.length > 0 && (
           <p className="degraded">Note: {otherNotes.join(', ')}</p>

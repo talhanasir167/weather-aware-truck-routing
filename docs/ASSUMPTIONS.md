@@ -41,6 +41,8 @@ Decisions made where the assessment brief is underspecified.
 ### ORS spike findings (Phase 0)
 
 - ORS requires a free API key (`ORS_API_KEY`). Without it the app uses OSRM.
+- Free-tier `alternative_routes` rejects trips longer than ~100 km (error 2004). We
+  retry a single HGV route, then top up to 3 distinct corridors with via-points.
 - Public OSRM often returns only 2 alternatives for long-haul US pairs; via-point top-up is required to meet the "3 route options" requirement.
 - Recorded during planning: Chicago→Detroit OSRM returned 2 routes; via-point perturbation produced a valid third (352 mi vs 282 mi direct).
 - Re-run of `scripts/ors_spike.py` (no ORS key): Chicago→Detroit **OSRM=2**, Dallas→Houston **OSRM=1**, Denver→KansasCity **OSRM=1**. Confirms via-point top-up is mandatory for the 3-route requirement on free OSRM.
